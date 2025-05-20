@@ -1,44 +1,47 @@
 <?php
-
 require_once('classes/database.php');
 $con = new database();
 
 $sweetAlertConfig = "";
 
-if (isset($_POST['register'])){
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
   $username = $_POST['username'];
   $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
   $firstname = $_POST['first_name'];
   $lastname = $_POST['last_name'];
+  $email = $_POST['email'];
 
-  $userID = $con->signupUser($username, $password, $firstname, $lastname);
+  $userID = $con->signupUser($username, $password, $firstname, $lastname, $email);
 
-  if ($userID){
+  if ($userID) {
     $sweetAlertConfig = "
     <script>
-    Swal.fire({
-    icon: 'success',
-    title: 'Registration Successful',
-    text: 'You have successfully registered as an admin.',
-    confirmButtonText: 'OK'
-    }).then(() =>{
-      window.location.href = 'login.php';
-    });
+      document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+          icon: 'success',
+          title: 'Registration Successful',
+          text: 'You have successfully registered as an admin.',
+          confirmButtonText: 'OK'
+        }).then(() => {
+          window.location.href = 'login.php';
+        });
+      });
     </script>";
-  }else{
+  } else {
     $sweetAlertConfig = "
     <script>
-    Swal.fire({
-    icon: 'error',
-    title: 'Registration Failed',
-    text: 'An error occurred during registration.',
-    confirmButtonText: 'OK'
-    });
+      document.addEventListener('DOMContentLoaded', function () {
+        Swal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: 'An error occurred during registration. Please try again.',
+          confirmButtonText: 'OK'
+        });
+      });
     </script>";
   }
-
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -70,19 +73,25 @@ if (isset($_POST['register'])){
         <div class="invalid-feedback">Username is required.</div>
       </div>
       <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="text" name="email" id="email" class="form-control" placeholder="Enter your email" required>
+        <div class="invalid-feedback">Email is required.</div>
+      </div>
+      <div class="mb-3">
         <label for="password" class="form-label">Password</label>
         <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
         <div class="invalid-feedback">Password must be at least 6 characters long, include an uppercase letter, a number, and a special character.</div>      
       </div>
-      <button type="submit" id="registerButton" name="register" class="btn btn-primary w-100">Register</button>
+      <button type="submit" name='register' class="btn btn-primary w-100">Register</button>
     </form>
   </div>
   
   <script src="./bootstrap-5.3.3-dist/js/bootstrap.js"></script>
   <script src="./package/dist/sweetalert2.js"></script>
   <?php echo $sweetAlertConfig; ?>
-  
+
   <script>
+    
   // Function to validate individual fields
   function validateField(field, validationFn) {
     field.addEventListener('input', () => {
@@ -99,71 +108,108 @@ if (isset($_POST['register'])){
   // Validation functions for each field
   const isNotEmpty = (value) => value.trim() !== '';
   const isPasswordValid = (value) => {
-    // Regular expression for password validation
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
     return passwordRegex.test(value);
   };
 
   // Real-time username validation using AJAX
-  const checkUsernameAvailability = (usernameField) =>{
-    usernameField.addEventListener('input',()=>{
-    const username = usernameField.value.trim();
-    if (username ===''){
-      usernameField.classList.remove('is-valid');
-      usernameField.classList.add('is-invalid');
-      usernameField.nextElementSibling.textContent = 'Username is required.';
-      registerButton.disabled = true;
-      return;
-    }
-    //Send AJAX Request to check username availability
-    fetch('ajax/check_username.php',{
-      method: 'POST',
-      headers:{
-        'Content-Type':'application/x-www-form-urlencoded',
-      },
-      body:`username=${encodeURIComponent(username)}`,
+  const checkUsernameAvailability = (usernameField) => {
+    usernameField.addEventListener('input', () => {
+      const username = usernameField.value.trim();
 
-    })
-      .then((response)=>response.json())
-      .then((data)=>{
-        if (data.exists){
-          usernameField.classList.remove('is-valid');
-          usernameField.classList.add('is-invalid');
-          usernameField.nextElementSibling.textContent = 'Username is already taken.';
-          registerButton.disabled = true;
-        }else {
-          usernameField.classList.remove('is-invalid');
-          usernameField.classList.add('is-valid');
-          usernameField.nextElementSibling.textContent = '';
-          registerButton.disabled = false;
-        }
+      if (username === '') {
+        usernameField.classList.remove('is-valid');
+        usernameField.classList.add('is-invalid');
+        usernameField.nextElementSibling.textContent = 'Username is required.';
+        return;
+      }
+
+      // Send AJAX request to check username availability
+      fetch('ajax/check_username.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `username=${encodeURIComponent(username)}`,
       })
-      .catch((error)=>{
-        console.error('Error:', error);
-        registerButton.disabled = true;
-      });
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.exists) {
+            usernameField.classList.remove('is-valid');
+            usernameField.classList.add('is-invalid');
+            usernameField.nextElementSibling.textContent = 'Username is already taken.';
+          } else {
+            usernameField.classList.remove('is-invalid');
+            usernameField.classList.add('is-valid');
+            usernameField.nextElementSibling.textContent = '';
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
     });
   };
+
+  // Real-time Email validation using AJAX
+  const checkEmailAvailability = (emailField) => {
+    emailField.addEventListener('input', () => {
+      const email = emailField.value.trim();
+
+      if (email === '') {
+        emailField.classList.remove('is-valid');
+        emailField.classList.add('is-invalid');
+        emailField.nextElementSibling.textContent = 'Email is required.';
+        return;
+      }
+
+      // Send AJAX request to check email availability
+      fetch('ajax/check_email.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `email=${encodeURIComponent(email)}`,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.exists) {
+            emailField.classList.remove('is-valid');
+            emailField.classList.add('is-invalid');
+            emailField.nextElementSibling.textContent = 'Email is already taken.';
+          } else {
+            emailField.classList.remove('is-invalid');
+            emailField.classList.add('is-valid');
+            emailField.nextElementSibling.textContent = '';
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    });
+  };
+
   // Get form fields
   const firstName = document.getElementById('first_name');
   const lastName = document.getElementById('last_name');
   const username = document.getElementById('username');
   const password = document.getElementById('password');
+  const email = document.getElementById('email');
 
   // Attach real-time validation to each field
   validateField(firstName, isNotEmpty);
   validateField(lastName, isNotEmpty);
   validateField(password, isPasswordValid);
   checkUsernameAvailability(username);
+  checkEmailAvailability(email);
 
   // Form submission validation
   document.getElementById('registrationForm').addEventListener('submit', function (e) {
-   // e.preventDefault();  Prevent form submission for validation
+    e.preventDefault(); // Prevent form submission for validation
 
     let isValid = true;
 
     // Validate all fields on submit
-    [firstName, lastName, username, password].forEach(field => {
+    [firstName, lastName, username, email, password].forEach((field) => {
       if (!field.classList.contains('is-valid')) {
         field.classList.add('is-invalid');
         isValid = false;
@@ -176,5 +222,7 @@ if (isset($_POST['register'])){
     }
   });
 </script>
+
+
 </body>
 </html>

@@ -1,9 +1,12 @@
 <?php
-    require_once('classes/database.php');
-    $con = new database();
+session_start();
 
-    $data = $con->opencon();
+if (!isset($_SESSION['admin_id'])) {
+  header('Location: login.php');
+  exit();
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +17,7 @@
 <body class="bg-light">
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Hello Admin</a>
+    <a class="navbar-brand" href="#">Hello, <?php echo ucfirst($_SESSION['admin_FN']); ?></a>
     <div class="d-flex ms-auto">
       <a href="logout.php" class="btn btn-outline-light">Logout</a>
     </div>

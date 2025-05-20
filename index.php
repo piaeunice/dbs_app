@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// If not set
 if (!isset($_SESSION['admin_id'])) {
   header('Location: login.php');
   exit();

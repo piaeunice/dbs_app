@@ -83,6 +83,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="invalid-feedback">Password must be at least 6 characters long, include an uppercase letter, a number, and a special character.</div>      
       </div>
       <button type="submit" name='register' class="btn btn-primary w-100">Register</button>
+      <div class="my-3 text-end">
+        <span>Have an account?</span>
+        <a href="login.php" class="btn btn-link p-0 align-baseline">Login</a>
+      </div>
     </form>
   </div>
   

@@ -1,3 +1,42 @@
+<?php
+session_start();
+require_once('classes/database.php');
+$con = new database();
+
+$sweetAlertConfig = ""; // Initialize SweetAlert script
+
+if (isset($_POST['login'])) {
+  $username = $_POST['username'];
+  $password = $_POST['password'];
+
+  $user = $con->loginUser($username, $password);
+
+  if ($user) {
+    $_SESSION['admin_id'] = $user['admin_id'];
+    $_SESSION['admin_FN'] = $user['admin_FN'];
+
+    $sweetAlertConfig = "<script>
+        Swal.fire({
+          icon: 'success',
+          title: 'Login Successful',
+          text: 'Welcome, " . addslashes(htmlspecialchars($user['admin_FN'])) . "!',
+          confirmButtonText: 'Continue'
+        }).then(() => {
+          window.location.href = 'index.php';
+        });
+      </script>";
+  } else {
+    $sweetAlertConfig = "<script>
+        Swal.fire({
+          icon: 'error',
+          title: 'Login Failed',
+          text: 'Invalid username or password.'
+        });
+      </script>";
+  }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +44,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Login</title>
   <link rel="stylesheet" href="./bootstrap-5.3.3-dist/css/bootstrap.css">
-  <link rel="stylesheet" href="./package/dist/sweetalert2.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-light">
   <div class="container py-5">
@@ -20,10 +59,14 @@
         <input type="password" name="password" id="password" class="form-control" placeholder="Enter your password" required>
       </div>
       <button type="submit" name="login" class="btn btn-primary w-100">Login</button>
+      <div class="my-3 text-end">
+        <span>Don't have an account?</span>
+        <a href="registration.php" class="btn btn-link p-0 align-baseline">Register here</a>
+      </div>
     </form>
+    <?php echo $sweetAlertConfig; ?>
   </div>
 
   <script src="./bootstrap-5.3.3-dist/js/bootstrap.js"></script>
-  <script src="./package/dist/sweetalert2.js"></script>
 </body>
 </html>

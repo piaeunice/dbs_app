@@ -1,20 +1,28 @@
 <?php
+// Include the database class file and create a new instance of the database connection
 require_once('classes/database.php');
 $con = new database();
 
+// Initialize a variable to store SweetAlert configuration script
 $sweetAlertConfig = "";
 
+// Check if the form was submitted using POST method
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
+  // Retrieve form data from the POST request
   $username = $_POST['username'];
+  // Hash the password using BCRYPT for secure storage
   $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
   $firstname = $_POST['first_name'];
   $lastname = $_POST['last_name'];
   $email = $_POST['email'];
 
+  // Call the signupUser method from the database class to register the user
   $userID = $con->signupUser($username, $password, $firstname, $lastname, $email);
 
+  // Check if user registration was successful
   if ($userID) {
+    // Configure SweetAlert to show a success message and redirect to login page
     $sweetAlertConfig = "
     <script>
       document.addEventListener('DOMContentLoaded', function () {
@@ -29,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       });
     </script>";
   } else {
+    // Configure SweetAlert to show an error message if registration fails
     $sweetAlertConfig = "
     <script>
       document.addEventListener('DOMContentLoaded', function () {
@@ -43,6 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
